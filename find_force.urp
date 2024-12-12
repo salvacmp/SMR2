@@ -1,0 +1,4 @@
+
+current_pose = get_actual_tcp_pose()
+movel(pose_add(current_pose, p[0,0,-0.0005,0,0,0]))
+textmsg(force()) 

@@ -4,7 +4,7 @@ import time
 import numpy as np
 import moveRobot
 import math
-
+import pyrealsense2 as rs
 
 eye_points = np.float32([
     (300, 423),  # Bottom-left (BL)
@@ -19,6 +19,7 @@ hand_points = np.float32([
     (-0.029369, -0.611195),  # Top-right (TR)
     (-0.030541, -0.372615),  # Top-left (TL)
 ])
+roi_polygon = [(228, 186), (238, 468), (480, 468), (471, 186)]
 
 perspective_matrix = cv2.getPerspectiveTransform(eye_points, hand_points)
 
@@ -59,6 +60,15 @@ def angleOffset(Angle):
         return Angle + 90 #OK
     if Angle < 60 and Angle >= 0:
         return 180-Angle 
+def is_point_in_polygon(point, polygon):
+    """
+    Check if a point is inside a polygon using cv2.pointPolygonTest.
+    :param point: Tuple (x, y) representing the point.
+    :param polygon: List of points [(x1, y1), (x2, y2), ...] representing the polygon.
+    :return: True if the point is inside the polygon, False otherwise.
+    """
+    return cv2.pointPolygonTest(np.array(polygon, dtype=np.int32), point, False) >= 0
+
 def run_webcam_inference_with_centers(confidence_threshold=0.55):
 
     """
@@ -66,7 +76,7 @@ def run_webcam_inference_with_centers(confidence_threshold=0.55):
     :param model_path: Path to the trained YOLOv8 model (e.g., 'yolov8n.pt' or your trained model file).
     :param confidence_threshold: Minimum confidence for detections to be displayed.
     """
-    model_path = "best.pt"
+    model_path = "E:/1_SMR2/SMR2/UR Script/vision/best.pt"
     # Load the trained YOLOv8 model
     model = YOLO(model_path)
     
@@ -96,68 +106,52 @@ def run_webcam_inference_with_centers(confidence_threshold=0.55):
         # Perform inference
         results = model(frame)
         annotated_frame = frame.copy()
-        cv2.circle(annotated_frame, (164,423), 5, (0, 255, 0), -1)
-        # qcd = cv2.QRCodeDetector()
-        # ret_qr, decoded_info, points, _ = qcd.detectAndDecodeMulti(annotated_frame)
-        # print(decoded_info)
-        # if ret_qr:
-        #     for s, p in zip(decoded_info, points):
-        #         if s:
-        #             print(s)
-        #             color = (0, 255, 0)
-        #         else:
-        #             color = (0, 0, 255)
-        #         cv2.polylines(annotated_frame, [p.astype(int)], True, color, 8)
-        points = []
         annotated_frame = results[0].plot()
+        cv2.circle(annotated_frame, (164,423), 5, (0, 255, 0), -1)
+        points = []
+        
+        # annotated_frame = results[0].plot()
+        cv2.polylines(annotated_frame, [np.array(roi_polygon, np.int32)], isClosed=True, color=(0, 255, 0), thickness=2)
+
         # Parse results and add center points for OBBs
         obbs = results[0].obb  # Access the OBB object
         if obbs is not None:
             for obb in obbs.data.cpu().numpy():
                 # Extract OBB details
                 x_center, y_center, width, height, angle, confidence, class_id = obb
-
+                #detection square
                 if confidence >= confidence_threshold:
+                    if is_point_in_polygon((x_center, y_center), roi_polygon):
+
                     # Simulate coordinates with the origin at the bottom-left
-                    hand_x, hand_y = map_to_hand_plane((x_center, y_center), perspective_matrix)
-                    brick_rotation = calculate_brick_rotation(width, height, angle)
+                        hand_x, hand_y = map_to_hand_plane((x_center, y_center), perspective_matrix)
+                        brick_rotation = calculate_brick_rotation(width, height, angle)
 
-                    print(repr(brick_rotation))
-                    # simulated_x = int(164)
-                    # simulated_y = int(423)
-                    # Draw the center point
-                    cv2.circle(annotated_frame, (int(x_center), int(y_center)), 5, (0, 255, 0), -1)
-                    cv2.line(annotated_frame, (int(x_center), int(y_center)), (int(x_center), 10), (0, 255, 0), 2)
-                    cv2.putText(
-                        annotated_frame,
-                        f"Rotation: {int(np.degrees(angle) % 360)}° | {angleOffset(int(np.degrees(angle)% 360))}° | NC: {radians_to_degrees(angle) }",
-                        (int(x_center) + 10, int(y_center) - 30),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.5,
-                        (255, 0, 0),
-                        1
-                    )
-                    # Display the simulated coordinates and class name
-                    class_name = results[0].names[int(class_id)]
-                    cv2.putText(
-                        annotated_frame,
-                        f"Hand: ({hand_x:.3f}, {hand_y:.3f})",
-                        (int(x_center) + 10, int(y_center) - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.5,
-                        (0, 255, 0),
-                        1
-                    )
-                    print(repr(hand_x))
-                    
-        # if(x == 2):
-        #     print(repr(points))
-        #     print(len(points))
-        # for m in range(len(points)):
-        #     moveRobot.sendMove(points[m][0],points[m][1])
-        #     time.sleep(5)
-                                    
-
+                        print(repr(brick_rotation))
+                        cv2.circle(annotated_frame, (int(x_center), int(y_center)), 5, (0, 255, 0), -1)
+                        
+                        cv2.line(annotated_frame, (int(x_center), int(y_center)), (int(x_center), 10), (0, 255, 0), 2)
+                        cv2.putText(
+                            annotated_frame,
+                            f"Rotation: {int(np.degrees(angle) % 360)}° | {angleOffset(int(np.degrees(angle)% 360))}° | NC: {radians_to_degrees(angle) }",
+                            (int(x_center) + 10, int(y_center) - 30),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.5,
+                            (255, 0, 0),
+                            1
+                        )
+                        # Display the simulated coordinates and class name
+                        class_name = results[0].names[int(class_id)]
+                        cv2.putText(
+                            annotated_frame,
+                            f"Hand: ({hand_x:.3f}, {hand_y:.3f})",
+                            (int(x_center) + 10, int(y_center) - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.5,
+                            (0, 255, 0),
+                            1
+                        )
+                        print(repr(hand_x))
         # Display the annotated frame
         cv2.imshow("Webcam Interface", annotated_frame)
         # time.sleep(1)
@@ -168,7 +162,7 @@ def run_webcam_inference_with_centers(confidence_threshold=0.55):
     # Release resources
     cap.release()
     cv2.destroyAllWindows()
-    return points
+    
 
 if __name__ == "__main__":
     # Path to the trained YOLO model

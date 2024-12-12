@@ -1,0 +1,4 @@
+Next Todo:
+
+- Train more on stacked bricks
+- Train more on red sided brick

@@ -1,5 +1,5 @@
 import socket
-import detect
+import detect_3 as detect
 import pickle
 import struct
 import math
@@ -46,8 +46,8 @@ def start_tcp_server(host='0.0.0.0', port=2025):
                     print(f"Request points: {index}")
                     print(repr(point_memory))
                     points = point_memory[int(index)]
-                    print(f"x: {points[0]}, y: {points[1]}, angle: {points[2]}, radians: {math.radians(points[2])}")
-                    client_socket.sendall(str(f"({points[0]}, {points[1]}, {(points[2])})").encode())                    
+                    print(f"x: {points[0]}, y: {points[1]}, height: {points[2]}, radians: {math.radians(points[3])}")
+                    client_socket.sendall(str(f"({points[0]}, {points[1]}, {(points[2])}, {(points[3])})").encode())                    
                 # while mode == "REC":
                 #     data2 = client_socket.recv(1024)
                 #     if not data:

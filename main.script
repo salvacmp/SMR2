@@ -33,10 +33,15 @@ def main():
     top_right = p[-0.029369, -0.611195, 0.1, -2.16042, -2.26419, 0.0197251]
     top_left = p[-0.030541, -0.372615, 0.1, -2.16042, -2.26419, 0.0197251]
     home = p[-0.573176, 0.146852, 0.462849, -2.16042, -2.26419, 0]
-    
-    
+    placement = p[-0.49980, 0.48557, 0.10487, 2.1956, 0.00838, 2.1676]
+    placement_approach = p[-0.49980, 0.48557, 0.5, 2.1956, 0.00838, 2.1676]
+    placement_clearance = p[-0.52584, 0.48557, 0.10486, 2.1955, 0.0839, 2.1676]
+    # placement = p[-1.04144, 0.40066, 0.09182, -2.1368, 0.0380, 2.1927 ]
+    # placement_approach = p[-1.04144, 0.40066, 0.3, -2.1368, 0.0380, 2.1927 ]
+    # placement_clearance = p[-0.908, 0.40066, 0.09182, -2.1368, 0.0380, 2.1927 ]
     #+0.0899 tool offset
     popup("Start Homing", blocking=True)
+    set_digital_out(0,True)
     movel(home)
     current_joint = get_actual_joint_positions()
     current_joint[5] = 0
@@ -57,18 +62,19 @@ def main():
     sleep(1)
     
     def angleToAA(Angle):
-      arad = d2r(Angle + 6) #is Angle radians
+      arad = d2r(Angle + 3) #is Angle radians
       rx = cos(0.5*arad)*3.14
       ry = sin(0.5*arad)*3.14
       return p[0,0,0,rx,ry,0]
     end
     x = 0
+    
     while x < totalPoints[1]:
         textmsg(x)
         textmsg(totalPoints)
         socket_send_int(x,"cam_socket")
         sleep(1)
-        coordinates = socket_read_ascii_float(3,"cam_socket")
+        coordinates = socket_read_ascii_float(4,"cam_socket")
         textmsg(coordinates)
         distance = 0.0899
         x_offset = cos(coordinates[3]/180*3.14)* distance
@@ -77,13 +83,70 @@ def main():
         textmsg(x_offset)
         textmsg("Y Offset")
         textmsg(y_offset)
-        movel((p[coordinates[1], coordinates[2],0.13, -2.16042, -2.26419, 0]), a=0.5, v=0.05, r=0)
-        current_pose = get_actual_tcp_pose()
-        current_pose[3] = 0
-        current_pose[4] = 0
-        current_pose[5] = 0
+        #move above the brick
+        movel(pose_add(p[coordinates[1], coordinates[2],0.5, 0,0, 0], angleToAA(coordinates[4])), a=0.5, v=0.6, r=0)
+        #rotate
+        # current_pose = get_actual_tcp_pose()
+        # current_pose[3] = 0
+        # current_pose[4] = 0
+        # current_pose[5] = 0
     
-        movel(pose_add(current_pose ,angleToAA(coordinates[3])), a=0.5, v=0.05, r=0)
+        # movel(pose_add(current_pose ,angleToAA(coordinates[3])))
+        
+        
+        
+        #move to pick the brick
+        
+        approach = get_actual_tcp_pose()
+        approach[2] = 0
+        movel(pose_add(approach, p[0,0,coordinates[3],0,0,0]), a=0.5, v=0.05, r=0)
+        if force() < 50:
+          while force() < 50:
+            current_pose = get_actual_tcp_pose()
+            textmsg(force())
+            movel(pose_add(current_pose, p[0,0,-0.0005,0,0,0]))
+          end
+        end
+        set_digital_out(1,True)
+        sleep(1)
+        
+        #move up
+        clearance = get_actual_tcp_pose()
+        clearance[2] = 0
+        movel(pose_add(approach, p[0,0,0.5,0,0,0]), a=0.5, v=0.6, r=0)
+        
+        # move to placement point
+        movel(home)
+        moving = get_actual_tcp_pose()
+        # moving[0] = 0
+        # moving[1] = 0
+        # moving[3] = 0
+        # moving[4] = 0
+        # moving[5] = 0
+        # movel(pose_add(pose_add(moving, p[-0.44937, -0.04070, 0,0,0,0]), angleToAA(90)), a=0.5, v=0.6, r=0)
+        movel(placement_approach, a=0.5, v=0.6, r=0)
+        movel(placement, a=0.5, v=0.6, r=0)
+        textmsg("current force")
+        set_digital_out(1,False)
+        sleep(3)
+        movel(placement_clearance, a=0.5, v=0.6, r=0)
+        movel(home)
+        #place
+        #down
+        # approach = get_actual_tcp_pose()
+        # approach[2] = 0
+        # # movel(pose_add(approach, p[0,0,0.2+(0.054*(x)),0,0,0]), a=0.5, v=0.05, r=0)
+        # set_digital_out(1,False)
+        # sleep(2)
+        # # sleep(2)
+        # # movel(p[-0.44942, -0.04070, 0.3, -1.1831, -1.2068, -1.2407], a=0.5, v=0.6, r=0)
+        # # sleep(2)
+        # #up
+        # clearance = get_actual_tcp_pose()
+        # clearance[2] = 0
+        # movel(pose_add(approach, p[0,0,0.5,0,0,0]), a=0.5, v=0.6, r=0)
+        # movel((p[coordinates[1], coordinates[2],0.204, -2.16042, -2.26419, 0]), a=0.5, v=0.05, r=0)
+    
         # expected_angle = get_actual_joint_positions()
         # expected_angle[5] = coordinates[3]
         # movej(expected_angle)
