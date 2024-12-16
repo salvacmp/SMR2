@@ -73,13 +73,13 @@ while x < totalPoints[1]:
 
     approach = get_actual_tcp_pose()
     approach[2] = 0
-    movel(pose_add(approach, p[0,0,coordinates[3],0,0,0]), a=0.5, v=0.3, r=0)
+    movel(pose_add(approach, p[0,0,coordinates[3],0,0,0]), a=0.1, v=0.3, r=0)
     textmsg(force())
     if force() < 50:
       while force() < 50:
         current_pose = get_actual_tcp_pose()
         textmsg(force())
-        movel(pose_add(current_pose, p[0,0,-0.0005,0,0,0]))
+        movel(pose_add(current_pose, p[0,0,-0.0005,0,0,0]), a=0.1, v=0.01, r=0)
       end
     end
    
