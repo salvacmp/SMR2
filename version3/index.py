@@ -15,7 +15,6 @@ import math
 from eventemitter import EventEmitter
 import json
 
-
 class App:
     def __init__(self, root):
         self.root = root
@@ -76,16 +75,16 @@ class App:
         #     (-0.08238,-0.33500),  # Top-left (TL)
         # ])
         self.eye_points = np.float32([
-            (267, 468),
-            (463, 462),
-            (448, 216),
-            (254, 219)
+            (196, 463),
+            (533, 462),
+            (513, 37),
+            (182, 45)
         ])
         self.hand_points = np.float32([
-            (-0.52507,-0.38959),  # Bottom-left (BL)
-            (-0.51195, -0.76239),  # Bottom-right (BR)
-            (-0.04092, -0.74408),  # Top-right (TR)
-            (-0.04831,-0.36217),  # Top-left (TL)
+            (-0.04831,-0.36217),  # Bottom-left (BL)
+            (-0.04092, -0.74408),  # Bottom-right (BR)
+            (-0.52507,-0.38959),  # Top-right (TR)
+            (-0.51195, -0.76239),  # Top-left (TL)
         ])
         # self.roi_polygon = [(153, 415), (405, 391), (407, 212), (213, 213)]
         self.roi_polygon = [(267, 468), (463, 462), (448, 216), (254, 219)]
@@ -245,6 +244,18 @@ class App:
         self.log_listbox.insert(tk.END, "Process stopped.")
         self.active = False
         self.update_button_states()
+    def transform_coordinates(self, xp, yp, zp):
+        a = -7.623178493625794e-05
+        b = 0.001583300304299284
+        c = -0.5841489756392849
+        d = 0.0015555086433522267
+        e = 6.071404193758092e-05
+        f = -1.115529503523589
+
+        xd = a * xp + b * yp + c
+        yd = d * xp + e * yp + f
+
+        return xd, yd
     def update_camera_feed(self):
         while self.running:
             
@@ -298,11 +309,21 @@ class App:
             robot_z2 = 0.20011
             slope, intercept = self.calculate_slope_and_intercept(camera_z1, robot_z1, camera_z2, robot_z2)
             annotated_frame = results[0].plot()
-            #YOLO
-            cv2.circle(annotated_frame, (267, 468), 5, (0, 0, 255), -1)
-            cv2.circle(annotated_frame, (463, 462), 5, (0, 0, 255), -1)
-            cv2.circle(annotated_frame, (448, 216), 5, (0, 0, 255), -1)
-            cv2.circle(annotated_frame, (254, 219), 5, (0, 0, 255), -1)
+            #Center Calculation
+            cv2.circle(annotated_frame, (320,240), 5, (0, 0, 255), -1)
+            # #YOLO
+            # cv2.circle(annotated_frame, (196, 463), 5, (0, 0, 255), -1)
+            # cv2.circle(annotated_frame, (533, 462), 5, (0, 0, 255), -1)
+            # cv2.circle(annotated_frame, (519, 452), 5, (0, 0, 255), -1)
+            # cv2.circle(annotated_frame, (180, 459), 5, (0, 0, 255), -1)
+            
+            cv2.circle(annotated_frame, (498, 227), 5, (0, 0, 255), -1)
+            cv2.circle(annotated_frame, (495, 30), 5, (0, 0, 255), -1)
+            cv2.circle(annotated_frame, (198, 38), 5, (0, 0, 255), -1)
+            cv2.circle(annotated_frame, (207, 248), 5, (0, 0, 255), -1)
+            cv2.circle(annotated_frame, (221, 444), 5, (0, 0, 255), -1)
+            cv2.circle(annotated_frame, (506, 432), 5, (0, 0, 255), -1)
+            
             
             obbs = results[0].obb
             if obbs is not None:
@@ -398,6 +419,7 @@ class App:
                             # )
                             # Display the simulated coordinates and class name
                             class_name = results[0].names[int(class_id)]
+                            print(class_name)
                             # cv2.putText(
                             #     annotated_frame,
                             #     f"Hand: ({hand_x:.3f}, {hand_y:.3f})",
@@ -411,24 +433,31 @@ class App:
                             depth_value = depth_value / 1000
                             # depth_value = undistorted_depth[int(x_center), int(y_center)] * depth_scale
                             counted_Z = self.camera_to_robot_z(depth_value, slope, intercept) -0.005
-                            ox, oy = self.calculate_offset_xy(np.array([(x_center, y_center)]), depth_value)
+                            cx, cy = self.transform_coordinates(x_center, y_center, 1)
+                            #calculate offset
+                            ox, oy = self.calculate_distance(cx, cy, depth_value*1000)
+                            
                             cv2.putText(
                                 annotated_frame,
-                                f"o_x: {hand_x + (ox*1):.5f} | o_y: {hand_y+(oy*1):.5f}",
+                                f"Z: {ox:.5f} | o_y: {oy:.5f}",
                                 (int((longest_side_point[0] + bottom_point[0]) / 2), int((longest_side_point[1] + bottom_point[1]) / 2) - 10),
                                 cv2.FONT_HERSHEY_SIMPLEX,
                                 0.5,
                                 (255, 255, 0),
                                 1
                             )
+                            if class_name == "brick":
+                                class_type = 1
+                            if class_name == "brick-side":
+                                class_type = 2   
                             # print(repr(counted_Z))
                             if hand_x is not None and self.PointRequest and len(self.points) <= len(obbs):
                                 angle_converted = angle
                                 # angle_counted = angleOffset(angle_converted)
                                 angle_counted = self.newAngleCounter(angle_converted)
                                 self.insertLog(f"Real angle: {angle_converted} | Offset Angle: {angle_counted} | CamZ : {depth_value} | HandZ: {counted_Z}")
-                                self.insertLog([hand_x,hand_y, counted_Z, int( angle_counted)])
-                                self.points.append([hand_x,hand_y, counted_Z, int(angle_counted)])
+                                self.insertLog([cx ,cy, depth_value, int( angle_counted), class_name])
+                                self.points.append([cx,cy, depth_value, int(angle_counted), class_type])
                                 if len(self.points) == len(obbs):
                                     self.PointRequest = False 
                                 
@@ -478,14 +507,16 @@ class App:
                             print(f"Request points: {index}")
                             print(repr(self.points))
                             points = self.points[int(index)]
-                            print(f"x: {points[0]}, y: {points[1]}, height: {points[2]}, radians: {math.radians(points[3])}")
-                            client_socket.sendall(str(f"({points[0]}, {points[1]}, {(points[2])}, {(points[3])})").encode())    
+                            print(f"x: {points[0]}, y: {points[1]}, height: {points[2]}, radians: {math.radians(points[3])}, type: {points[4]}")
+                            client_socket.sendall(str(f"({points[0]}, {points[1]}, {(points[2])}, {(points[3])}, {(points[4])})").encode())    
                 except Exception as e:
                     self.insertLog(f"Error: {e}")
 
                 finally:
                     # Clean up the connection
                     client_socket.close()
+
+
     def calculate_offset_xy(self, detected_points, depth):
         """
         Calculate the offset of the detected object from the center of the camera based on the depth,
@@ -493,26 +524,36 @@ class App:
         
         :param detected_points: 2D points of detected object in the image plane (x, y)
         :param depth: Depth value of the object in camera space (in meters)
-        :param camera_matrix: Camera intrinsic matrix
-        :param dist_coeffs: Camera distortion coefficients
         :return: Offset in 2D space (dx, dy)
         """
-        # Undistort the detected 2D points
+        # Uncomment this if you need to undistort the detected 2D points
         # undistorted_points = cv2.undistortPoints(detected_points, self.camera_matrix, self.dist_coeffs)
+        
+        # Use detected_points directly if undistortion is not needed
+        points = detected_points  # or undistorted_points if undistortion is used
 
         # Calculate the 3D coordinates in camera space using depth (z)
-        x = (detected_points[0][0] - self.camera_matrix[0][2]) * depth / self.camera_matrix[0][0]
-        y = (detected_points[0][1] - self.camera_matrix[1][2]) * depth / self.camera_matrix[1][1]
-        
-        # Center of the camera (in 2D space, which is at the image center)
-        center_of_camera_x = self.camera_matrix[0][2]
-        center_of_camera_y = self.camera_matrix[1][2]
+        x = (points[0][0] - self.camera_matrix[0][2]) * depth / self.camera_matrix[0][0]
+        y = (points[0][1] - self.camera_matrix[1][2]) * depth / self.camera_matrix[1][1]
         
         # Calculate the offset in 2D space (dx, dy)
-        dx = x 
-        dy = y 
+        dx = x
+        dy = y
 
         return dx, dy
+
+
+    def calculate_distance(self,pixel_x, pixel_y, distance_mm):
+        # Convert pixel coordinates to normalized image coordinates
+        normalized_x = (pixel_x - self.camera_matrix[0, 2]) / self.camera_matrix[0, 0]
+        normalized_y = (pixel_y - self.camera_matrix[1, 2]) / self.camera_matrix[1, 1]
+
+        # Calculate real-world coordinates
+        real_x = normalized_x * distance_mm
+        real_y = normalized_y * distance_mm
+
+        return real_x, real_y
+
     def is_point_in_polygon(self, point, polygon):
         """
         Check if a point is inside a polygon using cv2.pointPolygonTest.

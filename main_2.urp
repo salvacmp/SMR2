@@ -1,0 +1,9 @@
+textmsg(get_actual_joint_positions())
+textmsg("-0-0-0-0-0-0-0-0-0-0-0-0")
+textmsg(get_actual_tcp_pose())
+buffer_memory = 0
+placement = p[-0.01276, 0.58909, 0.10035, -2.2109, -0.0016, -2.2169]
+placement_approach = p[-0.01276, 0.58909, 0.150, -2.2109, -0.0016, -2.2169]
+placement_clearance = p[-0.03960, 0.58909, 0.10435, -2.2109, -0.0016, -2.2169]
+home = p[-0.24004, -0.54751, 1089.15,0.0517, 3.1131, -0.00190]
+

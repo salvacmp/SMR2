@@ -6,16 +6,21 @@ placement = p[-0.01276, 0.58909, 0.10035, -2.2109, -0.0016, -2.2169]
 placement_approach = p[-0.01276, 0.58909, 0.150, -2.2109, -0.0016, -2.2169]
 placement_clearance = p[-0.03960, 0.58909, 0.10435, -2.2109, -0.0016, -2.2169]
 home = p[-0.24004, -0.54751, 1089.15,0.0517, 3.1131, -0.00190]
-home_low = p[-0.23463,-0.54746,0.79847, -0.0645, 3.1124, -0.0173]
+home_low = p[-0.15170,-0.54741,1.11208, -0.0646, 3.1124, -0.0174]
+home_low_low = p[-0.15170,-0.54741,0.7, -0.0646, 3.1124, -0.0174]
 home_transfer = p[-0.573176, 0.146852, 0.3, -2.16042, -2.26419, 0]
-set_digital_out(0,True)
+placement_side = p[0.14054, 0.58909, 0.27888, -3.1075, -0.0584, 0.0349]
+placement_side_config = p[-0.45014, 0.54481, 0.5, -3.1075, -0.0584, 0.0349]
+set_digital_out(1,False)
 popup("Start Homing", blocking=True)
 movel(home_low)
+home_z = 1.11208
 while buffer_memory <= 20:
 #   current_joint = get_actual_joint_positions()
 #   current_joint[5] = 0
 #   movej(current_joint)
   popup("Moving", blocking=True)
+  movel(home_low)
   #movel(bottom_right, a=0.5, v=0.05, r=0)
   #movel(top_right, a=0.5, v=0.05, r=0)
   #movel(top_left, a=0.5, v=0.05, r=0)
@@ -41,11 +46,13 @@ while buffer_memory <= 20:
     textmsg(force())
   end
   while x < totalPoints[1]:
+    movel(home_low_low, a=0.5, v=0.6, r=0)
     textmsg(x)
     textmsg(totalPoints)
     socket_send_int(x,"cam_socket")
     sleep(0.1)
-    coordinates = socket_read_ascii_float(4,"cam_socket")
+    coordinates = socket_read_ascii_float(5,"cam_socket")
+    brick_type = coordinates[5]
     textmsg(coordinates)
     getZ = get_actual_tcp_pose()
     #move above the brick
@@ -59,7 +66,7 @@ while buffer_memory <= 20:
 
     approach[2] = 0
     #   movel(pose_add(approach, p[0,0,(getZ[2]-(coordinates[3]-0.2)),0,0,0]), a=0.1, v=0.3, r=0)
-    brickz = ((getZ[2]-(coordinates[3]))+0.05)
+    brickz = ((home_z-(coordinates[3]))+0.05)
     textmsg(brickz)
 
     movel(pose_add(approach, p[0,0,brickz,0,0,0]), a=0.1, v=0.3, r=0)
@@ -82,20 +89,40 @@ while buffer_memory <= 20:
     movel(pose_add(clearance, p[0,0,0.5,0,0,0]), a=0.5, v=0.8, r=0)
 
     # move to placement point
-    curr_pos = get_actual_tcp_pose()
-    home_temp = home_transfer
-    home_temp[2] = 0
-    movel(pose_add(home_temp, p[0,0,curr_pos[2],0,0,0]), a=0.5, v=0.8, r=0)
-    moving = get_actual_tcp_pose()
+    if brick_type == 1:
+      
+      curr_pos = get_actual_tcp_pose()
+      home_temp = home_transfer
+      home_temp[2] = 0
+      movel(pose_add(home_temp, p[0,0,curr_pos[2],0,0,0]), a=0.5, v=0.8, r=0)
+      moving = get_actual_tcp_pose()
 
 
-    movel(pose_add(placement_approach, p[((-0.0538*buffer_memory)+-0.05),0,0,0,0,0]), a=0.5, v=0.8, r=0)
-    set_digital_out(1,False)
-    movel(pose_add(placement, p[(-0.0538*buffer_memory),0,0,0,0,0]), a=0.5, v=0.8, r=0)
-    sleep(2)
-    movel(pose_add(placement_clearance, p[(-0.0538*buffer_memory),0,0,0,0,0]), a=0.5, v=0.7, r=0)
-    movel(home_transfer, a=0.5, v=0.6, r=0)
-    movel(home_low, a=0.5, v=0.6, r=0)
+      movel(pose_add(placement_approach, p[((-0.06*buffer_memory)+-0.05),0,0,0,0,0]), a=0.5, v=0.8, r=0)
+      set_digital_out(1,False)
+      movel(pose_add(placement, p[(-0.06*buffer_memory),0,0,0,0,0]), a=0.5, v=0.8, r=0)
+      sleep(2)
+      movel(pose_add(placement_clearance, p[(-0.06*buffer_memory),0,0,0,0,0]), a=0.5, v=0.7, r=0)
+      movel(home_transfer, a=0.5, v=0.6, r=0)
+    elif brick_type == 2:
+      curr_pos = get_actual_tcp_pose()
+      home_temp = home_transfer
+      home_temp[2] = 0
+      movel(pose_add(home_temp, p[0,0,curr_pos[2],0,0,0]), a=0.5, v=0.8, r=0)
+      # placement_side_config = placement_side
+      # placement_side_config[1] = -0.45013
+      movel(placement_side_config, a=0.5, v=0.8, r=0)
+      moving = get_actual_tcp_pose()
+      
+      movel(pose_add(placement_side, p[(-0.0538*buffer_memory),0,0,0,0,0]), a=0.5, v=0.7, r=0)
+      set_digital_out(1,False)
+      sleep(2)
+      movel(placement_side_config, a=0.5, v=0.8, r=0)
+      movel(home_transfer, a=0.5, v=0.6, r=0)
+    else:
+      set_digital_out(1,False)
+    end
+    # movel(home_low, a=0.5, v=0.6, r=0)
 
     x = x + 1
     buffer_memory = buffer_memory + 1
