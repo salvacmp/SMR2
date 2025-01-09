@@ -30,6 +30,45 @@ class App:
         self.right_bottom_frame = Frame(root, width=500, height=250, bg="white")
         self.right_bottom_frame.grid(row=1, column=1, padx=10, pady=10)
 
+         # Setting up styles for buttons
+        self.style = ttk.Style()
+      
+        # Use the 'alt' theme for a more modern look
+        self.style.theme_use('alt')  
+
+        # Style for buttons
+        self.style.configure("TButton",
+                             padding=6,
+                             relief="flat",  # Flat button for a more modern effect
+                             background="#4CAF50",  # Nice green background color
+                             foreground="white",  # White text
+                             font=("Arial", 12, "bold"))
+
+        # Hover effects for buttons
+        self.style.map("TButton",
+                       background=[("active", "#45a049")])  # Lighter green color when hovering
+        
+        # New style for the "Stop" button (red background)
+        self.style.configure("RedButton.TButton",
+                             padding=6,
+                             relief="flat",  # Flat button without 3D effect
+                             background="#FF5733",  # Red for the Stop button
+                             foreground="white",  # White text
+                             font=("Arial", 12, "bold"))
+       
+        # Hover effect for the "Stop" button
+        self.style.map("RedButton.TButton",
+                      background=[("active", "#FF2A00")])  # Darker red when hovering
+
+        # Ensure that all columns have the same 'weight' so they scale evenly
+        for col in range(4):
+            self.right_top_frame.grid_columnconfigure(col, weight=1)
+
+        # Ensure that the rows have the correct 'weight'
+        self.right_top_frame.grid_rowconfigure(0, weight=1)
+        self.right_top_frame.grid_rowconfigure(1, weight=1)
+        self.right_top_frame.grid_rowconfigure(2, weight=1)
+
         # Add a placeholder logo in the middle top center
         # self.logo_label = Label(root, text="Ropax Depaletizer", bg="white", font=("Arial", 24))
         # self.logo_label.place(relx=0.5, y=30, anchor="center")
@@ -118,20 +157,23 @@ class App:
         self.port_entry = Entry(self.right_top_frame, width=20)
         self.port_entry.grid(row=1, column=1, padx=5, pady=5, sticky="w")
 
-        self.connect_button = Button(self.right_top_frame, text="Connect", command=self.connect)
-        self.connect_button.grid(row=2, column=0, columnspan=2, pady=10)
-        
-        self.disconnect_button = Button(self.right_top_frame, text="Disconnect", command=self.disconnect)
-        self.disconnect_button.grid(row=2, column=3, columnspan=2, pady=10)
-        # Buttons for Start, Pause, Stop
-        self.start_button = Button(self.right_top_frame, text="Start", command=self.start_process, state="disabled")
-        self.start_button.grid(row=3, column=0, padx=5, pady=5)
+        # Buttons for Connect and Disconnect
+        self.connect_button = ttk.Button(self.right_top_frame, text="Connect", command=self.connect)
+        self.connect_button.grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
 
-        self.pause_button = Button(self.right_top_frame, text="Pause", command=self.pause_process, state="disabled")
-        self.pause_button.grid(row=3, column=1, padx=5, pady=5)
+        self.disconnect_button = ttk.Button(self.right_top_frame, text="Disconnect", command=self.disconnect)
+        self.disconnect_button.grid(row=0, column=2, columnspan=2, padx=5, pady=5, sticky="ew")
 
-        self.stop_button = Button(self.right_top_frame, text="Stop", command=self.stop_process, state="disabled")
-        self.stop_button.grid(row=4, column=0, columnspan=2, pady=10)
+        # Buttons for Start, Pause
+        self.start_button = ttk.Button(self.right_top_frame, text="Start", command=self.start_process, state="disabled")
+        self.start_button.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+
+        self.pause_button = ttk.Button(self.right_top_frame, text="Pause", command=self.pause_process, state="disabled")
+        self.pause_button.grid(row=1, column=2, columnspan=2, padx=5, pady=5, sticky="ew")
+
+        # Stop button (spanning 2 columns)
+        self.stop_button = ttk.Button(self.right_top_frame, text="Stop", command=self.stop_process, state="disabled", style="RedButton.TButton")
+        self.stop_button.grid(row=2, column=0, columnspan=4, padx=5, pady=5, sticky="ew")
 
         # Logs section
         self.log_listbox = tk.Listbox(self.right_bottom_frame, height=15, width=150)
