@@ -171,7 +171,7 @@ class App:
         self.port_entry.grid(row=1, column=1, padx=5, pady=5, sticky="w")
 
         # Load Button
-        self.load_button = ttk.Button((self.right_top_frame, text="Load", command=self.load_button, style="BlueButton.TButton")
+        self.load_button = ttk.Button((self.right_top_frame, text="Load", command=self.load, style="BlueButton.TButton")
         self.load_button.grid(row=1, column=2, columnspan=2, padx=5, pady=5, sticky="ew")
 
 
@@ -235,7 +235,12 @@ class App:
         }
         with open("config.json", "w") as file:
             json.dump(config, file)
+           
+    #Load function
+    def load(self):
+        print("Loaded")
 
+    
     def connect(self):
         self.save_config()
         # Simulate connection logic here
