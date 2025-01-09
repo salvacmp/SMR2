@@ -42,6 +42,7 @@ while True:
     results = model(frame, verbose=False)
     annotated_frame = frame.copy()
     obbs = results[0].obb
+    cv2.circle(annotated_frame, (355,297), 5, (0, 0, 255), -1)
     if obbs is not None:
             for obb in obbs.data.cpu().numpy():
                 # Extract OBB details
