@@ -59,6 +59,18 @@ class App:
         # Hover effect for the "Stop" button
         self.style.map("RedButton.TButton",
                       background=[("active", "#FF2A00")])  # Darker red when hovering
+        
+         # New style for the "Load" button (red background)
+        self.style.configure("BlueButton.TButton",
+                             padding=6,
+                             relief="flat",  # Flat button without 3D effect
+                             background="#4aa2ef",  # Blue for Load button
+                             foreground="white",  # White text
+                             font=("Arial", 12, "bold"))
+       
+        # Hover effect for the "Stop" button
+        self.style.map("BlueButton.TButton",
+                      background=[("active", "#4b73d3")])  # Darker Blue when hovering
 
         # Ensure that all columns have the same 'weight' so they scale evenly
         for col in range(4):
@@ -157,6 +169,11 @@ class App:
 
         self.port_entry = Entry(self.right_top_frame, width=20)
         self.port_entry.grid(row=1, column=1, padx=5, pady=5, sticky="w")
+
+        # Load Button
+        self.load_button = ttk.Button((self.right_top_frame, text="Load", command=self.load_button, style="BlueButton.TButton")
+        self.load_button.grid(row=1, column=2, columnspan=2, padx=5, pady=5, sticky="ew")
+
 
         # Buttons for Connect and Disconnect
         self.connect_button = ttk.Button(self.right_top_frame, text="Connect", command=self.connect)
