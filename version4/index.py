@@ -295,31 +295,31 @@ class App:
         if class_type == 2 and factor >= 20:
             if (90-5) <= angle <= (90+5):
                 roi= [
-                    (cx - (offset-20), cy - (offset+35)),  # Top-left
-                    (cx + (offset-20), cy - (offset+35)),  # Top-right
-                    (cx + (offset-20), cy + (offset+35)),  # Bottom-right
-                    (cx - (offset-20), cy + (offset+35)),  # Bottom-left
+                    (cx - (offset-15), cy - (offset+35)),  # Top-left
+                    (cx + (offset-15), cy - (offset+35)),  # Top-right
+                    (cx + (offset-15), cy + (offset+35)),  # Bottom-right
+                    (cx - (offset-15), cy + (offset+35)),  # Bottom-left
                 ]
             else:
                 roi= [
-                    (cx - (offset-20), cy - offset),  # Top-left
-                    (cx + (offset-20), cy - offset),  # Top-right
-                    (cx + (offset-20), cy + offset),  # Bottom-right
-                    (cx - (offset-20), cy + offset),  # Bottom-left
+                    (cx - (offset-15), cy - offset),  # Top-left
+                    (cx + (offset-15), cy - offset),  # Top-right
+                    (cx + (offset-15), cy + offset),  # Bottom-right
+                    (cx - (offset-15), cy + offset),  # Bottom-left
                 ]
             if (180-5) <= angle:
                 roi= [
-                    (cx - (offset+35), cy - (offset-20)),  # Top-left
-                    (cx + (offset+35), cy - (offset-20)),  # Top-right
-                    (cx + (offset+35), cy + (offset-20)),  # Bottom-right
-                    (cx - (offset+35), cy + (offset-20)),  # Bottom-left
+                    (cx - (offset+35), cy - (offset-15)),  # Top-left
+                    (cx + (offset+35), cy - (offset-15)),  # Top-right
+                    (cx + (offset+35), cy + (offset-15)),  # Bottom-right
+                    (cx - (offset+35), cy + (offset-15)),  # Bottom-left
                 ]
             else:
                 roi= [
-                    (cx - offset, cy - (offset-20)),  # Top-left
-                    (cx + offset, cy - (offset-20)),  # Top-right
-                    (cx + offset, cy + (offset-20)),  # Bottom-right
-                    (cx - offset, cy + (offset-20)),  # Bottom-left
+                    (cx - offset, cy - (offset-15)),  # Top-left
+                    (cx + offset, cy - (offset-15)),  # Top-right
+                    (cx + offset, cy + (offset-15)),  # Bottom-right
+                    (cx - offset, cy + (offset-15)),  # Bottom-left
                 ]
         else:
             roi= [
@@ -486,7 +486,8 @@ class App:
                                         angle_counted = self.newAngleCounter(angle_converted)
                                         self.insertLog(f"x_center:{cx}, y_center:{y_center}, depth:{depth_value}, angle:{int(angle_counted)}, class:{class_name}")
                                         self.insertLog(f"{self.calculate_extra_movement((x_center-self.precission_roi_x), depth_value)/1000}")
-                                        self.points.append([cx-(self.calculate_extra_movement((x_center-self.precission_roi_x), depth_value)/1000),cy, depth_value, int(angle_counted), class_type, depth_value])
+                                        # self.points.append([cx-(self.calculate_extra_movement((x_center-self.precission_roi_x), depth_value)/1000),cy, depth_value, int(angle_counted), class_type, depth_value])
+                                        self.points.append([cx,cy, depth_value, int(angle_counted), class_type, depth_value])
                                         if len(self.points) == len(obbs):
                                             self.z_filter()
                                             self.insertLog(f"Filtered points: {len(self.points)}")
@@ -522,9 +523,6 @@ class App:
                                         bottom_point_index = bottom_three[-1][1]
                                         bottom_point = corners[bottom_point_index]
 
-                                        # Draw the bottom-most point
-                                        cv2.circle(annotated_frame, (int(bottom_point[0]), int(bottom_point[1])), 5, (255, 0, 0), -1)
-
                                         # Calculate distances and store the points
                                         distances = []
                                         for y_coord, index in bottom_three[:-1]:  # Skip the bottom-most point
@@ -543,26 +541,9 @@ class App:
                                         dy = longest_side_point[1] - bottom_point[1]
                                         angle = math.degrees(math.atan2(dy, dx))  # Angle in degrees
                                         if angle < 0: angle *=-1
-                                        # Display the longest side and its angle
-                                        cv2.line(
-                                            annotated_frame,
-                                            (int(bottom_point[0]), int(bottom_point[1])),
-                                            (int(longest_side_point[0]), int(longest_side_point[1])),
-                                            (0, 255, 0),
-                                            2
-                                        )
-
-                                        # Draw a horizontal line at the bottom-most point’s y-coordinate
-                                        cv2.line(
-                                            annotated_frame,
-                                            (0, int(bottom_point[1])),
-                                            (frame_width, int(bottom_point[1])),
-                                            (0, 0, 255),
-                                            2
-                                        )
-                                        hand_x, hand_y = self.map_to_hand_plane((x_center, y_center), self.perspective_matrix)
                                         cv2.circle(annotated_frame, (int(x_center), int(y_center)), 5, (0, 255, 0), -1)
-                                        cv2.line(annotated_frame, (int(x_center), int(y_center)), (int(x_center), 10), (0, 255, 0), 2)
+
+                                        hand_x, hand_y = self.map_to_hand_plane((x_center, y_center), self.perspective_matrix)
 
                                         # Display the simulated coordinates and class name
                                         class_name = results[0].names[int(class_id)]
@@ -574,7 +555,8 @@ class App:
                                         counted_Z = self.camera_to_robot_z(depth_value, slope, intercept) -0.005
                                         cx, cy = self.transform_coordinates(x_center, y_center, 1)
                                         angle_counted = self.newAngleCounter(angle)
-                                        if (self.points[self.PrecissionId][5]-0.02) <= depth_value <= (self.points[self.PrecissionId][5]+0.02):
+                                        if (self.points[self.PrecissionId][5]-0.029) <= depth_value <= (self.points[self.PrecissionId][5]+0.029):
+                                        # if True:
                                             pX = 345 - x_center
                                             pY = 285 - y_center
                                             self.insertLog(f"pxm Multiplier: {multiplier}")
@@ -605,7 +587,10 @@ class App:
                                                 (255, 255, 0),
                                                 1
                                             )
-                                        
+                                            if confidence < 0.7:
+                                                px = 99941
+                                                py = 99941
+
                                             if hand_x is not None and self.PrecissionRequest and self.precission_point((x_center, y_center)):
                                                 
                                                 for coords in self.precissionPolygon:
@@ -616,6 +601,9 @@ class App:
                                                 self.insertLog(f"px: {px}, py: {py}")
                                                 # print(px, py)
                                                 # self.points[self.PrecissionId - 1] = [px,py, depth_value, int(angle_counted), class_type]
+                                                if px == 0:
+                                                    px = 99941
+                                                    py = 99941
                                                 self.precissionPoint = [px, py, depth_value, int(angle_counted), class_type]
                                 
                                 
@@ -638,33 +626,34 @@ class App:
         Returns:
             float: Extra movement in millimeters.
         """
-        self.insertLog(f"parameters: pixels={pixels} height={height}")
-        # if height <= 0:
-        #     return 0
-        
-        # # No extra movement for heights above 0.8 meters
-        # if height > 0.8:
-        #     return 0.0
-
-        # # No adjustment for pixels in the range [-10, 10]
-        # if -25 <= pixels <= 25:
-        #     return 0.0
-
-        # # Slope derived from calibration
-        # k = 1.08  # mm/pixel
-
-        # # Calculate absolute pixel adjustment beyond the no-adjustment zone
-        # adjusted_pixels = abs(pixels) - 20
-
-        # # Calculate movement
-        # movement = k * adjusted_pixels / height
-
-        # # Apply sign based on pixel direction
-        # if pixels > 20:
-        #     return -movement  # Negative movement for positive pixels
-        # elif pixels < -20:
-        #     return movement   # Positive movement for negative pixels
         return 0
+        self.insertLog(f"parameters: pixels={pixels} height={height}")
+        if height <= 0:
+            return 0
+        
+        # No extra movement for heights above 0.8 meters
+        if height > 0.8:
+            return 0.0
+
+        # No adjustment for pixels in the range [-10, 10]
+        if -25 <= pixels <= 25:
+            return 0.0
+
+        # Slope derived from calibration
+        k = 3.08  # mm/pixel
+
+        # Calculate absolute pixel adjustment beyond the no-adjustment zone
+        adjusted_pixels = abs(pixels) 
+
+        # Calculate movement
+        movement = k * adjusted_pixels / height
+
+        # Apply sign based on pixel direction
+        if pixels > 20:
+            return -movement  # Negative movement for positive pixels
+        elif pixels < -20:
+            return movement   # Positive movement for negative pixels
+        # return 0
     def insertLog(self, message):
         with open("test.txt", "a") as myfile:
             myfile.write(f"{datetime.datetime.now()} | {message}\n")
