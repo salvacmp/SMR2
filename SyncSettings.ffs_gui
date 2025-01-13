@@ -32,7 +32,7 @@
     </Filter>
     <FolderPairs>
         <Pair>
-            <Left>E:\1_SMR2\SMR2\UR Script\version4\URS</Left>
+            <Left>E:\1_SMR2\SMR2\UR Script\version5\URS</Left>
             <Right>sftp://root@192.168.0.43:22/programs/ropax|pass64=ZWFzeWJvdA==</Right>
         </Pair>
     </FolderPairs>

@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import Label, Frame, Entry, Button
+from tkinter import Label, Frame, Entry, Button, ttk
 from ultralytics import YOLO
 import cv2
 from PIL import Image, ImageTk
@@ -30,7 +30,62 @@ class App:
         self.right_bottom_frame = Frame(root, width=500, height=250, bg="white")
         self.right_bottom_frame.grid(row=1, column=1, padx=10, pady=10)
 
-        self.logo_image = ImageTk.PhotoImage(file="logo.png")  
+         # Setting up styles for buttons
+        self.style = ttk.Style()
+      
+        # Use the 'alt' theme for a more modern look
+        self.style.theme_use('alt')  
+
+        # Style for buttons
+        self.style.configure("TButton",
+                             padding=6,
+                             relief="flat",  # Flat button for a more modern effect
+                             background="#4CAF50",  # Nice green background color
+                             foreground="white",  # White text
+                             font=("Arial", 12, "bold"))
+
+        # Hover effects for buttons
+        self.style.map("TButton",
+                       background=[("active", "#45a049")])  # Lighter green color when hovering
+        
+        # New style for the "Stop" button (red background)
+        self.style.configure("RedButton.TButton",
+                             padding=6,
+                             relief="flat",  # Flat button without 3D effect
+                             background="#FF5733",  # Red for the Stop button
+                             foreground="white",  # White text
+                             font=("Arial", 12, "bold"))
+       
+        # Hover effect for the "Stop" button
+        self.style.map("RedButton.TButton",
+                      background=[("active", "#FF2A00")])  # Darker red when hovering
+        
+         # New style for the "Load" button (red background)
+        self.style.configure("BlueButton.TButton",
+                             padding=6,
+                             relief="flat",  # Flat button without 3D effect
+                             background="#4aa2ef",  # Blue for Load button
+                             foreground="white",  # White text
+                             font=("Arial", 12, "bold"))
+       
+        # Hover effect for the "Stop" button
+        self.style.map("BlueButton.TButton",
+                      background=[("active", "#4b73d3")])  # Darker Blue when hovering
+
+        # Ensure that all columns have the same 'weight' so they scale evenly
+        for col in range(4):
+            self.right_top_frame.grid_columnconfigure(col, weight=1)
+
+        # Ensure that the rows have the correct 'weight'
+        self.right_top_frame.grid_rowconfigure(0, weight=1)
+        self.right_top_frame.grid_rowconfigure(1, weight=1)
+        self.right_top_frame.grid_rowconfigure(2, weight=1)
+        self.right_top_frame.grid_rowconfigure(3, weight=1)
+        self.right_top_frame.grid_rowconfigure(4, weight=1)
+        # Add a placeholder logo in the middle top center
+        # self.logo_label = Label(root, text="Ropax Depaletizer", bg="white", font=("Arial", 24))
+        # self.logo_label.place(relx=0.5, y=30, anchor="center")
+        self.logo_image = ImageTk.PhotoImage(file="rpx-smr.png")  # Ensure logo.png is in the same directory
         self.logo_label = Label(root, image=self.logo_image, bg="white")
         self.logo_label.place(relx=0.5, y=30, anchor="center")
 
@@ -41,7 +96,10 @@ class App:
         self.config = rs.config()
         self.config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
         self.config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-        self.profile = self.pipeline.start(self.config)
+        try:
+            self.profile = self.pipeline.start(self.config)
+        except Exception as e:
+            pass
 
         self.emitter = EventEmitter()
 
@@ -92,20 +150,28 @@ class App:
         self.port_entry = Entry(self.right_top_frame, width=20)
         self.port_entry.grid(row=1, column=1, padx=5, pady=5, sticky="w")
 
-        self.connect_button = Button(self.right_top_frame, text="Connect", command=self.connect)
-        self.connect_button.grid(row=2, column=0, columnspan=2, pady=10)
-        
-        self.disconnect_button = Button(self.right_top_frame, text="Disconnect", command=self.disconnect)
-        self.disconnect_button.grid(row=2, column=3, columnspan=2, pady=10)
-        # Buttons for Start, Pause, Stop
-        self.start_button = Button(self.right_top_frame, text="Start", command=self.start_process, state="disabled")
-        self.start_button.grid(row=3, column=0, padx=5, pady=5)
+        # Load Button
+        self.load_button = ttk.Button(self.right_top_frame, text="Load", command=self.load, style="BlueButton.TButton")
+        self.load_button.grid(row=1, column=2, columnspan=2, padx=5, pady=5, sticky="ew")
 
-        self.pause_button = Button(self.right_top_frame, text="Pause", command=self.pause_process, state="disabled")
-        self.pause_button.grid(row=3, column=1, padx=5, pady=5)
 
-        self.stop_button = Button(self.right_top_frame, text="Stop", command=self.stop_process, state="disabled")
-        self.stop_button.grid(row=4, column=0, columnspan=2, pady=10)
+        # Buttons for Connect and Disconnect
+        self.connect_button = ttk.Button(self.right_top_frame, text="Connect", command=self.connect)
+        self.connect_button.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+
+        self.disconnect_button = ttk.Button(self.right_top_frame, text="Disconnect", command=self.disconnect)
+        self.disconnect_button.grid(row=2, column=2, columnspan=2, padx=5, pady=5, sticky="ew")
+
+        # Buttons for Start, Pause
+        self.start_button = ttk.Button(self.right_top_frame, text="Start", command=self.start_process, state="disabled")
+        self.start_button.grid(row=3, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+
+        self.pause_button = ttk.Button(self.right_top_frame, text="Pause", command=self.pause_process, state="disabled")
+        self.pause_button.grid(row=3, column=2, columnspan=2, padx=5, pady=5, sticky="ew")
+
+        # Stop button (spanning 2 columns)
+        self.stop_button = ttk.Button(self.right_top_frame, text="Stop", command=self.stop_process, state="disabled", style="RedButton.TButton")
+        self.stop_button.grid(row=4, column=0, columnspan=4, padx=5, pady=5, sticky="ew")
 
         # Logs section
         self.log_listbox = tk.Listbox(self.right_bottom_frame, height=15, width=150)
@@ -170,10 +236,6 @@ class App:
 
             # self.insertLog(f"{str(data)}")
             if data == "Connected: Universal Robots Dashboard Server":
-                load_program = "load /programs/ropax/main.urp\n"
-                self.robot_socket.send(load_program.encode())
-                data = self.robot_socket.recv(1024)
-                data = data.decode('utf-8').strip()
                 self.insertLog(f"{data}")
                 self.active = True
                 self.update_button_states()
@@ -187,6 +249,29 @@ class App:
             self.insertLog(f"Error: {e}")
             self.active = False
             self.update_button_states()
+    def load(self):
+        # Simulate connection logic here
+        self.robot_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            # self.insertLog(f"{str(data)}")
+            if self.active:
+                self.robot_socket.connect((self.ip_entry.get(), int(self.port_entry.get())))
+                load_program = "load /programs/ropax/main.urp\n"
+                self.robot_socket.send(load_program.encode())
+                data = self.robot_socket.recv(1024)
+                data = data.decode('utf-8').strip()
+                self.insertLog(f"Loaded: Program")
+                self.active = True
+                self.update_button_states()
+                # self.robot_socket.close()
+            else:
+                self.insertLog("Failed to connect to the robot.")
+                self.robot_socket.close()
+                self.update_button_states()
+        except Exception as e:
+            self.insertLog(f"Error: {e}")
+            self.update_button_states()
+
     def disconnect(self):
         self.robot_socket.close()
         self.insertLog("Disconnected from IP: {} Port: {}".format(self.ip_entry.get(), self.port_entry.get()))
@@ -333,182 +418,71 @@ class App:
         return roi
         
     def update_camera_feed(self):
-        while self.running:
-            
-            # Convert frame to RGB and then to ImageTk
-            frames = self.pipeline.wait_for_frames()
-            color_frame = frames.get_color_frame()
-            depth_frame = frames.get_depth_frame()
+        try: 
+            while self.running:
+                
+                # Convert frame to RGB and then to ImageTk
+                frames = self.pipeline.wait_for_frames()
+                color_frame = frames.get_color_frame()
+                depth_frame = frames.get_depth_frame()
 
-            color_image = np.asanyarray(color_frame.get_data())
-            depth_sensor = self.profile.get_device().first_depth_sensor()
-            depth_scale = depth_sensor.get_depth_scale()
-            
-            align = rs.align(rs.stream.color)
-            aligned_frames = align.process(frames)
-            depth_frame = aligned_frames.get_depth_frame()
-            if not color_frame:
-                continue
-            # Convert the frame to RGB for Tkinter
-            h, w = color_image.shape[:2]
-            new_camera_matrix, undist_roi = cv2.getOptimalNewCameraMatrix(self.camera_matrix, self.dist_coeffs, (w, h), 1, (w, h))
-            undistorted_image = cv2.undistort(color_image, self.camera_matrix, self.dist_coeffs, None, new_camera_matrix)
-            x, y, w, h = undist_roi
-            undistorted_image = undistorted_image[y:y+h, x:x+w]
-            
-            depth_image = np.asanyarray(depth_frame.get_data())
-            undistorted_depth = cv2.undistort(depth_image, self.camera_matrix, self.dist_coeffs, None, new_camera_matrix)
-            
-            # frame = color_image
-            frame = undistorted_image
-            frame_height, frame_width = frame.shape[:2]
-            results = self.model(frame, conf=0.77, iou=0.7)
-            annotated_frame = frame.copy()
-            camera_z1 = 1.086
-            robot_z1 = 0.25009
-            camera_z2 = 1.132
-            robot_z2 = 0.20011
-            slope, intercept = self.calculate_slope_and_intercept(camera_z1, robot_z1, camera_z2, robot_z2)
-            annotated_frame = results[0].plot()
-            #Center Calculation
+                color_image = np.asanyarray(color_frame.get_data())
+                depth_sensor = self.profile.get_device().first_depth_sensor()
+                depth_scale = depth_sensor.get_depth_scale()
+                
+                align = rs.align(rs.stream.color)
+                aligned_frames = align.process(frames)
+                depth_frame = aligned_frames.get_depth_frame()
+                if not color_frame:
+                    continue
+                # Convert the frame to RGB for Tkinter
+                h, w = color_image.shape[:2]
+                new_camera_matrix, undist_roi = cv2.getOptimalNewCameraMatrix(self.camera_matrix, self.dist_coeffs, (w, h), 1, (w, h))
+                undistorted_image = cv2.undistort(color_image, self.camera_matrix, self.dist_coeffs, None, new_camera_matrix)
+                x, y, w, h = undist_roi
+                undistorted_image = undistorted_image[y:y+h, x:x+w]
+                
+                depth_image = np.asanyarray(depth_frame.get_data())
+                undistorted_depth = cv2.undistort(depth_image, self.camera_matrix, self.dist_coeffs, None, new_camera_matrix)
+                
+                # frame = color_image
+                frame = undistorted_image
+                frame_height, frame_width = frame.shape[:2]
+                results = self.model(frame, conf=0.77, iou=0.7)
+                annotated_frame = frame.copy()
+                camera_z1 = 1.086
+                robot_z1 = 0.25009
+                camera_z2 = 1.132
+                robot_z2 = 0.20011
+                slope, intercept = self.calculate_slope_and_intercept(camera_z1, robot_z1, camera_z2, robot_z2)
+                annotated_frame = results[0].plot()
+                #Center Calculation
 
-            cv2.circle(annotated_frame, (345,285), 5, (0, 0, 255), -1)
-            
-            # cv2.circle(annotated_frame, (320,260), 5, (0, 255, 0), -1) #TL
-            # cv2.circle(annotated_frame, (370,310), 5, (0, 255, 0), -1) #BR
-            # cv2.circle(annotated_frame, (370,260), 5, (0, 255, 0), -1) #TR
-            # cv2.circle(annotated_frame, (320,310), 5, (0, 255, 0), -1) #BL
-            # cv2.circle(annotated_frame, (315,361), 5, (0, 255, 0), -1)
-            
-            # cv2.circle(annotated_frame, (405,361), 5, (0, 255, 0), -1)
-            # cv2.circle(annotated_frame, (405,253), 5, (0, 255, 0), -1)
-            
-            obbs = results[0].obb
-            if obbs is not None:
-                print(len(obbs))
-                for obb in obbs.data.cpu().numpy():
-                    if len(obb) == 7:
-                        x_center, y_center, width, height, angle, confidence, class_id = obb
-                        if confidence >= 0.77:
-                            if True:
-                                
-                                if self.PrecissionRequest == False:
+                cv2.circle(annotated_frame, (345,285), 5, (0, 0, 255), -1)
+                
+                # cv2.circle(annotated_frame, (320,260), 5, (0, 255, 0), -1) #TL
+                # cv2.circle(annotated_frame, (370,310), 5, (0, 255, 0), -1) #BR
+                # cv2.circle(annotated_frame, (370,260), 5, (0, 255, 0), -1) #TR
+                # cv2.circle(annotated_frame, (320,310), 5, (0, 255, 0), -1) #BL
+                # cv2.circle(annotated_frame, (315,361), 5, (0, 255, 0), -1)
+                
+                # cv2.circle(annotated_frame, (405,361), 5, (0, 255, 0), -1)
+                # cv2.circle(annotated_frame, (405,253), 5, (0, 255, 0), -1)
+                
+                obbs = results[0].obb
+                if obbs is not None:
+                    print(len(obbs))
+                    for obb in obbs.data.cpu().numpy():
+                        if len(obb) == 7:
+                            x_center, y_center, width, height, angle, confidence, class_id = obb
+                            if confidence >= 0.77:
+                                if True:
                                     
-                                    corners = self.get_obb_corners(x_center, y_center, width, height, angle)
-                                    cornerList = []
-
-                                    # Collect y-coordinates along with their index
-                                    for i, corner in enumerate(corners):
-                                        cornerList.append((corner[1], i))
-
-                                    # Sort the corners based on their y-coordinates (ascending)
-                                    sorted_corners = sorted(cornerList, key=lambda x: x[0])
-
-                                    # Get the three bottom-most corners
-                                    bottom_three = sorted_corners[-3:]
-
-                                    # Extract the most bottom point
-                                    bottom_point_index = bottom_three[-1][1]
-                                    bottom_point = corners[bottom_point_index]
-
-                                    # Draw the bottom-most point
-                                    cv2.circle(annotated_frame, (int(bottom_point[0]), int(bottom_point[1])), 5, (255, 0, 0), -1)
-
-                                    # Calculate distances and store the points
-                                    distances = []
-                                    for y_coord, index in bottom_three[:-1]:  # Skip the bottom-most point
-                                        current_point = corners[index]
-
-                                        # Calculate the distance
-                                        distance = np.sqrt((current_point[0] - bottom_point[0]) ** 2 + (current_point[1] - bottom_point[1]) ** 2)
-                                        distances.append((distance, current_point))
-
-                                    # Sort distances to get the longest side
-                                    distances.sort(reverse=True, key=lambda x: x[0])
-                                    longest_side_distance, longest_side_point = distances[0]
-
-                                    # Calculate the angle for the longest side
-                                    dx = longest_side_point[0] - bottom_point[0]
-                                    dy = longest_side_point[1] - bottom_point[1]
-                                    angle = math.degrees(math.atan2(dy, dx))  # Angle in degrees
-                                    if angle < 0: angle *=-1
-                                    # Display the longest side and its angle
-                                    cv2.line(
-                                        annotated_frame,
-                                        (int(bottom_point[0]), int(bottom_point[1])),
-                                        (int(longest_side_point[0]), int(longest_side_point[1])),
-                                        (0, 255, 0),
-                                        2
-                                    )
-
-                                    # Draw a horizontal line at the bottom-most point’s y-coordinate
-                                    cv2.line(
-                                        annotated_frame,
-                                        (0, int(bottom_point[1])),
-                                        (frame_width, int(bottom_point[1])),
-                                        (0, 0, 255),
-                                        2
-                                    )
-                                    hand_x, hand_y = self.map_to_hand_plane((x_center, y_center), self.perspective_matrix)
-                                    brick_rotation = self.calculate_brick_rotation(width, height, angle)
-
-                                    # print(repr(brick_rotation))
-                                    cv2.circle(annotated_frame, (int(x_center), int(y_center)), 5, (0, 255, 0), -1)
-                                    
-                                    cv2.line(annotated_frame, (int(x_center), int(y_center)), (int(x_center), 10), (0, 255, 0), 2)
-
-                                    # Display the simulated coordinates and class name
-                                    class_name = results[0].names[int(class_id)]
-                                    print(class_name)
-
-                                    depth_value = depth_frame.get_distance(int(x_center), int(y_center)) / depth_scale
-                                    depth_value = depth_value / 1000
-                                    # depth_value = undistorted_depth[int(x_center), int(y_center)] * depth_scale
-                                    counted_Z = self.camera_to_robot_z(depth_value, slope, intercept) -0.005
-                                    cx, cy = self.transform_coordinates(x_center, y_center, 1)
-                                    # cv2.polylines(annotated_frame, np.array([[315,253], [315,361], [405,377], [439,209]]).reshape(-1,1,2), isClosed=True, color=(255, 255, 0))
-                                    cv2.putText(
-                                        annotated_frame,
-                                        f"cX: {cx:.5f} | dY: {cy:.5f}",
-                                        (int((longest_side_point[0] + bottom_point[0]) / 2), int((longest_side_point[1] + bottom_point[1]) / 2) - 10),
-                                        cv2.FONT_HERSHEY_SIMPLEX,
-                                        0.5,
-                                        (255, 255, 0),
-                                        1
-                                    )
-                                    if class_name == "brick":
-                                        class_type = 1
-                                    if class_name == "brick-side":
-                                        class_type = 2 
-                                    if hand_x is not None and self.PointRequest and len(self.points) <= len(obbs):
-                                        angle_converted = angle
-                                        # angle_counted = angleOffset(angle_converted)
-                                        angle_counted = self.newAngleCounter(angle_converted)
-                                        self.insertLog(f"x_center:{cx}, y_center:{y_center}, depth:{depth_value}, angle:{int(angle_counted)}, class:{class_name}")
-                                        self.insertLog(f"{self.calculate_extra_movement((x_center-self.precission_roi_x), depth_value)/1000}")
-                                        # self.points.append([cx-(self.calculate_extra_movement((x_center-self.precission_roi_x), depth_value)/1000),cy, depth_value, int(angle_counted), class_type, depth_value])
-                                        self.points.append([cx,cy, depth_value, int(angle_counted), class_type, depth_value])
-                                        if len(self.points) == len(obbs):
-                                            self.z_filter()
-                                            self.insertLog(f"Filtered points: {len(self.points)}")
-                                            self.PointRequest = False 
-                                if self.PrecissionRequest == True:
-                                    self.precission_point((x_center, y_center))
-                                    for coords in self.precissionPolygon:
-                                        # self.insertLog(f"Polygon: {coords}")
-                                        cv2.circle(annotated_frame, coords, 5, (0, 255, 0), -1)
+                                    if self.PrecissionRequest == False:
                                         
-                                    if self.precission_point((x_center, y_center)):
-                                        
-                                        if self.points[self.PrecissionId][5] < 0.8:
-                                            # self.insertLog(">4 Level")
-                                            multiplier = ((abs(self.points[self.PrecissionId][5] - 0.8) * 100))*3
-                                        else:
-                                            multiplier = 0
-                                                
                                         corners = self.get_obb_corners(x_center, y_center, width, height, angle)
                                         cornerList = []
-                                        
+
                                         # Collect y-coordinates along with their index
                                         for i, corner in enumerate(corners):
                                             cornerList.append((corner[1], i))
@@ -522,6 +496,9 @@ class App:
                                         # Extract the most bottom point
                                         bottom_point_index = bottom_three[-1][1]
                                         bottom_point = corners[bottom_point_index]
+
+                                        # Draw the bottom-most point
+                                        cv2.circle(annotated_frame, (int(bottom_point[0]), int(bottom_point[1])), 5, (255, 0, 0), -1)
 
                                         # Calculate distances and store the points
                                         distances = []
@@ -541,9 +518,30 @@ class App:
                                         dy = longest_side_point[1] - bottom_point[1]
                                         angle = math.degrees(math.atan2(dy, dx))  # Angle in degrees
                                         if angle < 0: angle *=-1
-                                        cv2.circle(annotated_frame, (int(x_center), int(y_center)), 5, (0, 255, 0), -1)
+                                        # Display the longest side and its angle
+                                        cv2.line(
+                                            annotated_frame,
+                                            (int(bottom_point[0]), int(bottom_point[1])),
+                                            (int(longest_side_point[0]), int(longest_side_point[1])),
+                                            (0, 255, 0),
+                                            2
+                                        )
 
+                                        # Draw a horizontal line at the bottom-most point’s y-coordinate
+                                        cv2.line(
+                                            annotated_frame,
+                                            (0, int(bottom_point[1])),
+                                            (frame_width, int(bottom_point[1])),
+                                            (0, 0, 255),
+                                            2
+                                        )
                                         hand_x, hand_y = self.map_to_hand_plane((x_center, y_center), self.perspective_matrix)
+                                        brick_rotation = self.calculate_brick_rotation(width, height, angle)
+
+                                        # print(repr(brick_rotation))
+                                        cv2.circle(annotated_frame, (int(x_center), int(y_center)), 5, (0, 255, 0), -1)
+                                        
+                                        cv2.line(annotated_frame, (int(x_center), int(y_center)), (int(x_center), 10), (0, 255, 0), 2)
 
                                         # Display the simulated coordinates and class name
                                         class_name = results[0].names[int(class_id)]
@@ -554,66 +552,156 @@ class App:
                                         # depth_value = undistorted_depth[int(x_center), int(y_center)] * depth_scale
                                         counted_Z = self.camera_to_robot_z(depth_value, slope, intercept) -0.005
                                         cx, cy = self.transform_coordinates(x_center, y_center, 1)
-                                        angle_counted = self.newAngleCounter(angle)
-                                        if (self.points[self.PrecissionId][5]-0.029) <= depth_value <= (self.points[self.PrecissionId][5]+0.029):
-                                        # if True:
-                                            pX = 345 - x_center
-                                            pY = 285 - y_center
-                                            self.insertLog(f"pxm Multiplier: {multiplier}")
-                                            # factor = 1.33 + abs(((multiplier)/120)) 
+                                        # cv2.polylines(annotated_frame, np.array([[315,253], [315,361], [405,377], [439,209]]).reshape(-1,1,2), isClosed=True, color=(255, 255, 0))
+                                        cv2.putText(
+                                            annotated_frame,
+                                            f"cX: {cx:.5f} | dY: {cy:.5f}",
+                                            (int((longest_side_point[0] + bottom_point[0]) / 2), int((longest_side_point[1] + bottom_point[1]) / 2) - 10),
+                                            cv2.FONT_HERSHEY_SIMPLEX,
+                                            0.5,
+                                            (255, 255, 0),
+                                            1
+                                        )
+                                        if class_name == "brick":
+                                            class_type = 1
+                                        if class_name == "brick-side":
+                                            class_type = 2 
+                                        if hand_x is not None and self.PointRequest and len(self.points) <= len(obbs):
+                                            angle_converted = angle
+                                            # angle_counted = angleOffset(angle_converted)
+                                            angle_counted = self.newAngleCounter(angle_converted)
+                                            self.insertLog(f"x_center:{cx}, y_center:{y_center}, depth:{depth_value}, angle:{int(angle_counted)}, class:{class_name}")
+                                            self.insertLog(f"{self.calculate_extra_movement((x_center-self.precission_roi_x), depth_value)/1000}")
+                                            # self.points.append([cx-(self.calculate_extra_movement((x_center-self.precission_roi_x), depth_value)/1000),cy, depth_value, int(angle_counted), class_type, depth_value])
+                                            self.points.append([cx,cy, depth_value, int(angle_counted), class_type, depth_value])
+                                            if len(self.points) == len(obbs):
+                                                self.z_filter()
+                                                self.insertLog(f"Filtered points: {len(self.points)}")
+                                                self.PointRequest = False 
+                                    if self.PrecissionRequest == True:
+                                        self.precission_point((x_center, y_center))
+                                        for coords in self.precissionPolygon:
+                                            # self.insertLog(f"Polygon: {coords}")
+                                            cv2.circle(annotated_frame, coords, 5, (0, 255, 0), -1)
+                                            
+                                        if self.precission_point((x_center, y_center)):
+                                            
                                             if self.points[self.PrecissionId][5] < 0.8:
-                                                factor = -0.2  * self.points[self.PrecissionId][5] + 1.49
-                                                # factor = 1.33
+                                                # self.insertLog(">4 Level")
+                                                multiplier = ((abs(self.points[self.PrecissionId][5] - 0.8) * 100))*3
                                             else:
-                                                factor = 1.33
-                                            self.insertLog(f"pixel to mm factor: {factor}")
-                                            py = (((pX * factor) / 1000) *-1)
-                                            px = (((pY * factor) / 1000) *-1)
-                                            # if px <0 :
-                                            #     px = px + 0.02
-                                            # else:
-                                            #     px = px - 0.02
-                                            # if px < 0 and (90-5) <= angle_counted <= (90+5):
-                                            #     px = px - 0.02
-                                            # else:
-                                            #      px = px + 0.02
-                                            self.insertLog(f"px: {px}, py: {py}")
-                                            cv2.putText(
-                                                annotated_frame,
-                                                f"pX: {pX:.5f} | pY: {pY:.5f}",
-                                                (int((longest_side_point[0] + bottom_point[0]) / 2), int((longest_side_point[1] + bottom_point[1]) / 2) - 10),
-                                                cv2.FONT_HERSHEY_SIMPLEX,
-                                                0.5,
-                                                (255, 255, 0),
-                                                1
-                                            )
-                                            if confidence < 0.7:
-                                                px = 99941
-                                                py = 99941
+                                                multiplier = 0
+                                                    
+                                            corners = self.get_obb_corners(x_center, y_center, width, height, angle)
+                                            cornerList = []
+                                            
+                                            # Collect y-coordinates along with their index
+                                            for i, corner in enumerate(corners):
+                                                cornerList.append((corner[1], i))
 
-                                            if hand_x is not None and self.PrecissionRequest and self.precission_point((x_center, y_center)):
-                                                
-                                                for coords in self.precissionPolygon:
-                                                    # self.insertLog(f"Polygon: {coords}")
-                                                    cv2.circle(annotated_frame, coords, 5, (0, 255, 0), -1)
-                                                #calculate precission
-                                                self.insertLog(f"pX: {pX}, pY: {pY}")
+                                            # Sort the corners based on their y-coordinates (ascending)
+                                            sorted_corners = sorted(cornerList, key=lambda x: x[0])
+
+                                            # Get the three bottom-most corners
+                                            bottom_three = sorted_corners[-3:]
+
+                                            # Extract the most bottom point
+                                            bottom_point_index = bottom_three[-1][1]
+                                            bottom_point = corners[bottom_point_index]
+
+                                            # Calculate distances and store the points
+                                            distances = []
+                                            for y_coord, index in bottom_three[:-1]:  # Skip the bottom-most point
+                                                current_point = corners[index]
+
+                                                # Calculate the distance
+                                                distance = np.sqrt((current_point[0] - bottom_point[0]) ** 2 + (current_point[1] - bottom_point[1]) ** 2)
+                                                distances.append((distance, current_point))
+
+                                            # Sort distances to get the longest side
+                                            distances.sort(reverse=True, key=lambda x: x[0])
+                                            longest_side_distance, longest_side_point = distances[0]
+
+                                            # Calculate the angle for the longest side
+                                            dx = longest_side_point[0] - bottom_point[0]
+                                            dy = longest_side_point[1] - bottom_point[1]
+                                            angle = math.degrees(math.atan2(dy, dx))  # Angle in degrees
+                                            if angle < 0: angle *=-1
+                                            cv2.circle(annotated_frame, (int(x_center), int(y_center)), 5, (0, 255, 0), -1)
+
+                                            hand_x, hand_y = self.map_to_hand_plane((x_center, y_center), self.perspective_matrix)
+
+                                            # Display the simulated coordinates and class name
+                                            class_name = results[0].names[int(class_id)]
+                                            print(class_name)
+
+                                            depth_value = depth_frame.get_distance(int(x_center), int(y_center)) / depth_scale
+                                            depth_value = depth_value / 1000
+                                            # depth_value = undistorted_depth[int(x_center), int(y_center)] * depth_scale
+                                            counted_Z = self.camera_to_robot_z(depth_value, slope, intercept) -0.005
+                                            cx, cy = self.transform_coordinates(x_center, y_center, 1)
+                                            angle_counted = self.newAngleCounter(angle)
+                                            if (self.points[self.PrecissionId][5]-0.029) <= depth_value <= (self.points[self.PrecissionId][5]+0.029):
+                                            # if True:
+                                                pX = 345 - x_center
+                                                pY = 285 - y_center
+                                                self.insertLog(f"pxm Multiplier: {multiplier}")
+                                                # factor = 1.33 + abs(((multiplier)/120)) 
+                                                if self.points[self.PrecissionId][5] < 0.8:
+                                                    factor = -0.2  * self.points[self.PrecissionId][5] + 1.49
+                                                    # factor = 1.33
+                                                else:
+                                                    factor = 1.33
+                                                self.insertLog(f"pixel to mm factor: {factor}")
+                                                py = (((pX * factor) / 1000) *-1)
+                                                px = (((pY * factor) / 1000) *-1)
+                                                # if px <0 :
+                                                #     px = px + 0.02
+                                                # else:
+                                                #     px = px - 0.02
+                                                # if px < 0 and (90-5) <= angle_counted <= (90+5):
+                                                #     px = px - 0.02
+                                                # else:
+                                                #      px = px + 0.02
                                                 self.insertLog(f"px: {px}, py: {py}")
-                                                # print(px, py)
-                                                # self.points[self.PrecissionId - 1] = [px,py, depth_value, int(angle_counted), class_type]
-                                                if px == 0:
+                                                cv2.putText(
+                                                    annotated_frame,
+                                                    f"pX: {pX:.5f} | pY: {pY:.5f}",
+                                                    (int((longest_side_point[0] + bottom_point[0]) / 2), int((longest_side_point[1] + bottom_point[1]) / 2) - 10),
+                                                    cv2.FONT_HERSHEY_SIMPLEX,
+                                                    0.5,
+                                                    (255, 255, 0),
+                                                    1
+                                                )
+                                                if confidence < 0.7:
                                                     px = 99941
                                                     py = 99941
-                                                self.precissionPoint = [px, py, depth_value, int(angle_counted), class_type]
-                                
-                                
-                        
-            frame_rgb = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
-            img = Image.fromarray(frame_rgb)
-            imgtk = ImageTk.PhotoImage(image=img)
-            self.camera_label.imgtk = imgtk
-            self.camera_label.configure(image=imgtk)
-            time.sleep(0.03)  # 30 FPS
+
+                                                if hand_x is not None and self.PrecissionRequest and self.precission_point((x_center, y_center)):
+                                                    
+                                                    for coords in self.precissionPolygon:
+                                                        # self.insertLog(f"Polygon: {coords}")
+                                                        cv2.circle(annotated_frame, coords, 5, (0, 255, 0), -1)
+                                                    #calculate precission
+                                                    self.insertLog(f"pX: {pX}, pY: {pY}")
+                                                    self.insertLog(f"px: {px}, py: {py}")
+                                                    # print(px, py)
+                                                    # self.points[self.PrecissionId - 1] = [px,py, depth_value, int(angle_counted), class_type]
+                                                    if px == 0:
+                                                        px = 99941
+                                                        py = 99941
+                                                    self.precissionPoint = [px, py, depth_value, int(angle_counted), class_type]
+                                    
+                                    
+                            
+                frame_rgb = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
+                img = Image.fromarray(frame_rgb)
+                imgtk = ImageTk.PhotoImage(image=img)
+                self.camera_label.imgtk = imgtk
+                self.camera_label.configure(image=imgtk)
+                time.sleep(0.03)  # 30 FPS
+        except Exception as e:
+            pass
     def calculate_extra_movement(self, pixels, height):
         """
         Calculate the extra movement in millimeters based on the pixel distance 
@@ -890,7 +978,10 @@ class App:
         return slope * camera_z + intercept
     def on_closing(self):
         self.running = False
-        self.pipeline.stop()
+        try:
+            self.pipeline.stop()
+        except:
+            pass
         self.root.destroy()
         self.server_socket.close()  # Add this line
 
