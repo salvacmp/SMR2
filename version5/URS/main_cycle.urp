@@ -1,168 +1,137 @@
+# Initialization and setup
 textmsg(get_actual_joint_positions())
 textmsg("-0-0-0-0-0-0-0-0-0-0-0-0")
 textmsg(get_actual_tcp_pose())
+
 buffer_memory = 0
+
+# Define key positions
 placement = p[-0.01276, 0.58909, 0.10035, -2.2109, -0.0016, -2.2169]
 placement_approach = p[-0.01276, 0.58909, 0.102, -2.2109, -0.0016, -2.2169]
 placement_clearance = p[-0.03960, 0.58909, 0.102, -2.2109, -0.0016, -2.2169]
 
-home = p[-0.24004, -0.54751, 1089.15,0.0517, 3.1131, -0.00190]
-home_low = p[-0.15170,-0.54741, 1.11208, -0.0646, 3.1124, -0.0174]
-home_low_low = p[-0.15170,-0.54741, 1.056, -0.0646, 3.1124, -0.0174]
+home = p[-0.24004, -0.54751, 1.08915, 0.0517, 3.1131, -0.00190]
+home_low = p[-0.15170, -0.54741, 1.11208, -0.0646, 3.1124, -0.0174]
+home_low_low = p[-0.15170, -0.54741, 1.056, -0.0646, 3.1124, -0.0174]
 home_transfer = p[-0.573176, 0.146852, 0.3, -2.16042, -2.26419, 0]
 placement_side = p[0.14054, 0.58909, 0.27888, -3.1075, -0.0584, 0.0349]
 placement_side_config = p[-0.45014, 0.54481, 0.5, -3.1075, -0.0584, 0.0349]
-set_digital_out(1,False)
+
+set_digital_out(1, False)
+
+# Start homing process
 popup("Start Homing", blocking=True)
 movel(home_low_low)
 home_z = 1.056
+
 while buffer_memory <= 20:
-#   current_joint = get_actual_joint_positions()
-#   current_joint[5] = 0
-#   movej(current_joint)
-  popup("Moving", blocking=True)
-  movel(home_low_low)
-  #movel(bottom_right, a=0.5, v=0.05, r=0)
-  #movel(top_right, a=0.5, v=0.05, r=0)
-  #movel(top_left, a=0.5, v=0.05, r=0)
-  #movel(bottom_left, a=0.5, v=0.05, r=0)
-  socket_open("192.168.0.200", 2025, "cam_socket")
-  # sleep(1)
-  socket_send_int(99991,"cam_socket") #"req_cam_total"
-  sleep(3)
-  totalPoints = socket_read_ascii_float(1,"cam_socket")
-  textmsg(totalPoints[1])
-  socket_close("cam_socket")
-  socket_open("192.168.0.200", 2025, "cam_socket")
-  # sleep(1)
 
-  def angleToAA(Angle):
-    arad = d2r(Angle + 3) #is Angle radians
-    rx = cos(0.5*arad)*3.14
-    ry = sin(0.5*arad)*3.14
-    return p[0,0,0,rx,ry,0]
-  end
-  x = 0
-  thread readForce():
-    textmsg(force())
-  end
-  while x < totalPoints[1]:
-    movel(home_low_low, a=0.5, v=0.6, r=0)
-    textmsg(x)
-    textmsg(totalPoints)
-    socket_send_int(x,"cam_socket")
-    sleep(0.5)
-    coordinates = socket_read_ascii_float(5,"cam_socket")
-    brick_type = coordinates[5]
-    textmsg(coordinates)
-    getZ = get_actual_tcp_pose()
-    #move above the brick
-    movel(p[coordinates[1], coordinates[2],getZ[2], getZ[3],getZ[4], getZ[5]], a=0.5, v=0.7, r=0)
-    # if 80 >= coordinates[4] and 100 <= coordinates[4]:
-    #   currPos = get_actual_tcp_pose()
-    #   currPos[3] = 0
-    #   currPos[4] = 0
-    #   currPos[5] = 0
-    #   movel(pose_add(currPos, angleToAA(coordinates[4])), a=0.5, v=0.7, r=0)
-    # end
+    popup("Moving", blocking=True)
+    movel(home_low_low)
 
-    socket_send_int(99992,"cam_socket")
-    socket_close("cam_socket")
-    sleep(1)
-    
+    # Open socket for camera communication
     socket_open("192.168.0.200", 2025, "cam_socket")
-    socket_send_int(x,"cam_socket")
-    Pcoordinates = socket_read_ascii_float(5,"cam_socket")
-    getZ = get_actual_tcp_pose()
-    sleep(0.5)
-    textmsg("PCoordinates")
-    textmsg(Pcoordinates)
-    if Pcoordinates[1] != 99941:
-     
-      
-    
-      #rotate
-      # if 80 >= coordinates[4] and 100 <= coordinates[4]:
-      #   movel(pose_add(getZ, p[(Pcoordinates[2]*-1), (Pcoordinates[1]*-1),0,0,0,0]), a=0.5, v=0.7, r=0)
-      # else:
-      movel(pose_add(getZ, p[Pcoordinates[1], Pcoordinates[2],0,0,0,0]), a=0.5, v=0.7, r=0)
-      currPos = get_actual_tcp_pose()
-      currPos[3] = 0
-      currPos[4] = 0
-      currPos[5] = 0
-      movel(pose_add(currPos, angleToAA(coordinates[4])), a=0.5, v=0.7, r=0)
-      
-      # end
-      #move to pick the brick
-      fThread = run readForce()
-      approach = get_actual_tcp_pose()
+    socket_send_int(99991, "cam_socket")  # Request total points from camera
+    sleep(3)
+    totalPoints = socket_read_ascii_float(1, "cam_socket")
+    textmsg(totalPoints[1])
+    socket_close("cam_socket")
 
-      approach[2] = 0
-      #   movel(pose_add(approach, p[0,0,(getZ[2]-(coordinates[3]-0.2)),0,0,0]), a=0.1, v=0.3, r=0)
-      brickz = ((home_z-(coordinates[3]))+0.05)
-      textmsg(brickz)
-      
-      movel(pose_add(approach, p[0,0,brickz,0,0,0]), a=0.1, v=0.3, r=0)
+    def angleToAA(Angle):
+        """Converts an angle to axis-angle representation."""
+        arad = d2r(Angle + 3)
+        rx = cos(0.5 * arad) * 3.14
+        ry = sin(0.5 * arad) * 3.14
+        return p[0, 0, 0, rx, ry, 0]
 
-      textmsg(force())
-      while force() <= 70:
-          current_pose = get_actual_tcp_pose()
-          textmsg(force())
-          movel(pose_add(current_pose, p[0,0,-0.0005,0,0,0]), a=0.1, v=0.01, r=0)
-          textmsg(force())
-      end
-      textmsg(force())
-      kill fThread
-      set_digital_out(1,True)
-      sleep(0.5)
+    x = 0
 
-      #move up
-      clearance = get_actual_tcp_pose()
-      clearance[2] = 0
-      movel(pose_add(clearance, p[0,0,0.7,0,0,0]), a=0.5, v=0.8, r=0)
-
-      # move to placement point
-      if brick_type == 1:
-        
-        curr_pos = get_actual_tcp_pose()
-        home_temp = home_transfer
-        home_temp[2] = 0
-        movel(pose_add(home_temp, p[0,0,curr_pos[2],0,0,0]), a=0.5, v=0.8, r=0)
-        moving = get_actual_tcp_pose()
-
-
-        movel(pose_add(placement_approach, p[((-0.055*buffer_memory)+-0.05),0,0,0,0,0]), a=0.5, v=0.8, r=0)
-        set_digital_out(1,False)
-        movel(pose_add(placement, p[(-0.055*buffer_memory),0,0,0,0,0]), a=0.5, v=0.8, r=0)
-        sleep(3)
-        movel(pose_add(placement_clearance, p[(-0.055*buffer_memory),0,0,0,0,0]), a=0.5, v=0.7, r=0)
-        movel(home_transfer, a=0.5, v=0.6, r=0)
-      elif brick_type == 2:
-        curr_pos = get_actual_tcp_pose()
-        home_temp = home_transfer
-        home_temp[2] = 0
-        movel(pose_add(home_temp, p[0,0,curr_pos[2],0,0,0]), a=0.5, v=0.8, r=0)
-        # placement_side_config = placement_side
-        # placement_side_config[1] = -0.45013
-        movel(placement_side_config, a=0.5, v=0.8, r=0)
-        moving = get_actual_tcp_pose()
-        
-        movel(pose_add(placement_side, p[(-0.06*buffer_memory),0,0,0,0,0]), a=0.5, v=0.7, r=0)
-        set_digital_out(1,False)
-        sleep(3)
-        movel(placement_side_config, a=0.5, v=0.8, r=0)
-        movel(home_transfer, a=0.5, v=0.6, r=0)
-      else:
-        set_digital_out(1,False)
-      end
-      # movel(home_low, a=0.5, v=0.6, r=0)
-
-      x = x + 1
-      buffer_memory = buffer_memory + 1
-    else:
-      x = x + 1
+    thread readForce():
+        textmsg(force())
     end
-  end
-end
-socket_close("cam_socket")
 
+    while x < totalPoints[1]:
+        # Move to initial position
+        movel(home_low_low, a=0.5, v=0.6, r=0)
+        textmsg(x)
+        textmsg(totalPoints)
+
+        # Request coordinates from the camera
+        socket_open("192.168.0.200", 2025, "cam_socket")
+        socket_send_int(x, "cam_socket")
+        sleep(0.5)
+        coordinates = socket_read_ascii_float(5, "cam_socket")
+        brick_type = coordinates[5]
+        textmsg(coordinates)
+
+        getZ = get_actual_tcp_pose()
+
+        # Move above the brick
+        movel(p[coordinates[1], coordinates[2], getZ[2], getZ[3], getZ[4], getZ[5]], a=0.5, v=0.7, r=0)
+        
+        socket_send_int(99992, "cam_socket")
+        socket_close("cam_socket")
+        sleep(1)
+
+        # Retrieve precise placement coordinates
+        socket_open("192.168.0.200", 2025, "cam_socket")
+        socket_send_int(x, "cam_socket")
+        Pcoordinates = socket_read_ascii_float(5, "cam_socket")
+        getZ = get_actual_tcp_pose()
+        sleep(0.5)
+        textmsg("PCoordinates")
+        textmsg(Pcoordinates)
+
+        if Pcoordinates[1] != 99941:
+            movel(pose_add(getZ, p[Pcoordinates[1], Pcoordinates[2], 0, 0, 0, 0]), a=0.5, v=0.7, r=0)
+            currPos = get_actual_tcp_pose()
+            currPos[3:6] = [0, 0, 0]  # Reset rotation
+            movel(pose_add(currPos, angleToAA(coordinates[4])), a=0.5, v=0.7, r=0)
+
+            # Move to pick the brick
+            fThread = run readForce()
+            approach = get_actual_tcp_pose()
+            brickz = ((home_z - coordinates[3]) + 0.05)
+            textmsg(brickz)
+
+            movel(pose_add(approach, p[0, 0, brickz, 0, 0, 0]), a=0.1, v=0.3, r=0)
+
+            # Adjust position based on force sensor feedback
+            while force() <= 70:
+                current_pose = get_actual_tcp_pose()
+                movel(pose_add(current_pose, p[0, 0, -0.0005, 0, 0, 0]), a=0.1, v=0.01, r=0)
+            
+            kill fThread
+            set_digital_out(1, True)
+            sleep(0.5)
+
+            # Move up and proceed to placement point
+            clearance = get_actual_tcp_pose()
+            movel(pose_add(clearance, p[0, 0, 0.7, 0, 0, 0]), a=0.5, v=0.8, r=0)
+
+            if brick_type == 1:
+                movel(pose_add(home_transfer, p[0, 0, clearance[2], 0, 0, 0]), a=0.5, v=0.8, r=0)
+                movel(pose_add(placement_approach, p[(-0.055 * buffer_memory) + -0.05, 0, 0, 0, 0, 0]), a=0.5, v=0.8, r=0)
+                set_digital_out(1, False)
+                movel(pose_add(placement, p[-0.055 * buffer_memory, 0, 0, 0, 0, 0]), a=0.5, v=0.8, r=0)
+                sleep(3)
+                movel(pose_add(placement_clearance, p[-0.055 * buffer_memory, 0, 0, 0, 0, 0]), a=0.5, v=0.7, r=0)
+                movel(home_transfer, a=0.5, v=0.6, r=0)
+            elif brick_type == 2:
+                movel(pose_add(home_transfer, p[0, 0, clearance[2], 0, 0, 0]), a=0.5, v=0.8, r=0)
+                movel(placement_side_config, a=0.5, v=0.8, r=0)
+                movel(pose_add(placement_side, p[-0.06 * buffer_memory, 0, 0, 0, 0, 0]), a=0.5, v=0.7, r=0)
+                set_digital_out(1, False)
+                sleep(3)
+                movel(placement_side_config, a=0.5, v=0.8, r=0)
+                movel(home_transfer, a=0.5, v=0.6, r=0)
+            else:
+                set_digital_out(1, False)
+
+            buffer_memory += 1
+        else:
+            x += 1
+
+    x += 1
+
+socket_close("cam_socket")
