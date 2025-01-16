@@ -498,7 +498,7 @@ class App:
                                         bottom_point = corners[bottom_point_index]
 
                                         # Draw the bottom-most point
-                                        cv2.circle(annotated_frame, (int(bottom_point[0]), int(bottom_point[1])), 5, (255, 0, 0), -1)
+                                        # cv2.circle(annotated_frame, (int(bottom_point[0]), int(bottom_point[1])), 5, (255, 0, 0), -1)
 
                                         # Calculate distances and store the points
                                         distances = []
@@ -519,29 +519,29 @@ class App:
                                         angle = math.degrees(math.atan2(dy, dx))  # Angle in degrees
                                         if angle < 0: angle *=-1
                                         # Display the longest side and its angle
-                                        cv2.line(
-                                            annotated_frame,
-                                            (int(bottom_point[0]), int(bottom_point[1])),
-                                            (int(longest_side_point[0]), int(longest_side_point[1])),
-                                            (0, 255, 0),
-                                            2
-                                        )
+                                        # cv2.line(
+                                        #     annotated_frame,
+                                        #     (int(bottom_point[0]), int(bottom_point[1])),
+                                        #     (int(longest_side_point[0]), int(longest_side_point[1])),
+                                        #     (0, 255, 0),
+                                        #     2
+                                        # )
 
                                         # Draw a horizontal line at the bottom-most point’s y-coordinate
-                                        cv2.line(
-                                            annotated_frame,
-                                            (0, int(bottom_point[1])),
-                                            (frame_width, int(bottom_point[1])),
-                                            (0, 0, 255),
-                                            2
-                                        )
+                                        # cv2.line(
+                                        #     annotated_frame,
+                                        #     (0, int(bottom_point[1])),
+                                        #     (frame_width, int(bottom_point[1])),
+                                        #     (0, 0, 255),
+                                        #     2
+                                        # )
                                         hand_x, hand_y = self.map_to_hand_plane((x_center, y_center), self.perspective_matrix)
                                         brick_rotation = self.calculate_brick_rotation(width, height, angle)
 
                                         # print(repr(brick_rotation))
                                         cv2.circle(annotated_frame, (int(x_center), int(y_center)), 5, (0, 255, 0), -1)
                                         
-                                        cv2.line(annotated_frame, (int(x_center), int(y_center)), (int(x_center), 10), (0, 255, 0), 2)
+                                        # cv2.line(annotated_frame, (int(x_center), int(y_center)), (int(x_center), 10), (0, 255, 0), 2)
 
                                         # Display the simulated coordinates and class name
                                         class_name = results[0].names[int(class_id)]
